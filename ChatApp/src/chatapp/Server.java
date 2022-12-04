@@ -1,0 +1,99 @@
+package chatapp;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.*;
+
+public class Server {
+
+	ServerSocket server;
+	Socket socket;
+	BufferedReader input;
+	PrintWriter output;
+
+	// contsuter
+	public Server() {
+		try {
+			server = new ServerSocket(2278);
+			System.out.println("Server is ready to Accept Connection");
+			System.out.println("Waiting.....");
+			socket = server.accept();
+			input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			output = new PrintWriter(socket.getOutputStream());
+			startReading();
+			starWriting();
+
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		}
+
+	}
+
+	public void startReading() {
+
+		// thread-read karke deta rahega
+
+		Runnable r1 = () -> {
+			System.out.println("Reader Started....");
+			try {
+				while (true) {
+
+					String message = input.readLine();
+					if (message.equals("by")) {
+						System.out.println("Client terminated the chat");
+						socket.close();
+						break;
+					}
+					System.out.println("Cilent :" + message);
+				}
+
+			} catch (IOException e) {
+
+				// e.printStackTrace();
+				System.out.println("Connection closed");
+			}
+		};
+		new Thread(r1).start();
+
+	}
+
+	public void starWriting() {
+
+		// thread-usere se data lega or then send bhi karega client tak
+
+		Runnable r2 = () -> {
+			System.out.println("Writer started...");
+			try {
+				while (!socket.isClosed()) {
+
+					BufferedReader input2 = new BufferedReader(new InputStreamReader(System.in));
+					String content = input2.readLine();
+					output.println(content);
+					output.flush();
+					if (content.equals("by")) {
+						socket.close();
+						break;
+					}
+				}
+			} catch (IOException e) {
+
+				e.printStackTrace();
+				// System.out.println("Connection closed");
+			}
+			System.out.println("Connection closed");
+
+		};
+		new Thread(r2).start();
+
+	}
+
+	public static void main(String[] args) {
+		System.out.println("This is server...going to start server");
+		new Server();
+
+	}
+
+}
